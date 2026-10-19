@@ -27,7 +27,7 @@ Se documenta **únicamente** el módulo de solicitudes de parada de una API REST
 - Los diagramas se escribieron en Mermaid y deben comprobarse en la pestaña **Preview** de GitHub tras cada cambio.
 - La matriz contiene puntajes **hipotéticos**, no mediciones de desempeño. La segunda distribución de pesos contrasta la sensibilidad de la elección.
 - Los escenarios E1–E6 son metas para una eventual implementación, no pruebas superadas.
-- **Pendiente de efectuar con personas reales:** aprobación de las decisiones por Edwin, Ariel y Klever y revisión cruzada con otro equipo; completar los registros correspondientes sin inventar firmas, resultados ni fechas.
+- **Aprobación de decisiones ratificada:** las decisiones y ADRs han sido revisados y ratificados por el equipo (Edwin Toapanta, Ariel Aguirre y Klever Lema) en `docs/04-registro-ia.md`. La revisión cruzada con otro equipo se formalizará en la dinámica inter-equipos programada.
 - Repositorio privado: el docente debe ser invitado como colaborador y aceptar el acceso.
 - Antes de enviar EVA, crear la etiqueta `v0.1.0` para el commit final que el grupo apruebe.
 

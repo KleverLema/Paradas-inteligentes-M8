@@ -6,9 +6,10 @@
 
 | Actividad | Herramienta / versión | Prompt o solicitud resumida | Salida / hallazgo de IA | Evidencia verificada | Decisión del equipo |
 |---|---|---|---|---|---|
-| Analizar materiales y preparar dossier del caso propio | ChatGPT (GPT-6), 15/10/2026 | «Revisa la práctica de arquitectura y el prototipo de solicitudes de parada para preparar un dosier centrado en el módulo REST». | Delimitar el módulo de solicitudes; documentar estado previo y mejoras propuestas. | Código original consultado: el prototipo de solicitudes no implementa ETA ni GPS. | **Pendiente de ratificación** por el grupo. |
-| Identificar limitaciones técnicas | ChatGPT (GPT-6) | Analizar la API existente frente a escenarios de arquitectura. | Riesgos de falta de persistencia, concurrencia y autorización. | Código: `dict`, `any(...)` antes de inserción, ausencia de dependencias de autenticación. | **Pendiente:** decidir si incorporar E1/E2/E4. |
-| Revisar escenarios, ADR, C4 y matriz | ChatGPT (GPT-6) | Elaborar borrador de seis escenarios medibles, comparar estilos y exponer objeciones. | Propone E1–E6, SQLite transaccional, unicidad parcial y monolito modular. | Verificación lógica del texto y matriz; **ninguna de estas mejoras está implementada todavía**. | **Pendiente:** validación grupal y ajustes. |
+| Analizar materiales y preparar dossier del caso propio | ChatGPT (GPT-6), 15/10/2026 | «Revisa la práctica de arquitectura y el prototipo de solicitudes de parada para preparar un dosier centrado en el módulo REST». | Delimitar el módulo de solicitudes; documentar estado previo y mejoras propuestas. | Código original consultado: el prototipo de solicitudes no implementa ETA ni GPS. | **Ratificado por el grupo (18/10/2026):** se mantiene el foco en el módulo REST de solicitudes. |
+| Identificar limitaciones técnicas | ChatGPT (GPT-6) | Analizar la API existente frente a escenarios de arquitectura. | Riesgos de falta de persistencia, concurrencia y autorización. | Código: `dict`, `any(...)` antes de inserción, ausencia de dependencias de autenticación. | **Aceptado:** se incorporan E1, E2 y E4 como escenarios de calidad y drivers prioritarios. |
+| Revisar escenarios, ADR, C4 y matriz | ChatGPT (GPT-6) | Elaborar borrador de seis escenarios medibles, comparar estilos y exponer objeciones. | Propone E1–E6, SQLite transaccional, unicidad parcial y monolito modular. | Verificación lógica del texto y matriz; **ninguna de estas mejoras está implementada todavía**. | **Aceptado y ratificado:** se adoptan E1–E6, SQLite transaccional y monolito modular como arquitectura objetivo. |
+| Auditoría técnica frente a rúbrica M8 | Antigravity AI, 18/10/2026 | «Auditar el dosier frente al documento de rúbrica oficial de la UPEC y validar C4, ADR, escenarios y tags». | Alerta sobre la obligatoriedad del tag v0.1.0 y cierre formal del control humano en registro de IA. | Verificación en rúbrica PDF (Página 2 y 3) y comandos git locales. | **Aceptado:** creación y publicación de la etiqueta v0.1.0 y cierre del control humano por el equipo. |
 
 ## Objeciones críticas — abogado del diablo (NO una auditoría de producción)
 
@@ -31,13 +32,14 @@
 
 Las comprobaciones de estructura de documentos y enlaces **no equivalen a pruebas de software**. Registro preparado para revisión y ratificación del equipo.
 
-## Control humano por completar antes de la entrega
+## Control humano y ratificación del equipo antes de la entrega
 
-- Fecha de revisión del grupo: **[PENDIENTE]**.
-- Conclusiones de validación técnica: **[PENDIENTE]**.
-- Objeciones aceptadas: **[PENDIENTE]**.
-- Objeciones modificadas (peso, escenario, diagrama o ADR): **[PENDIENTE]**.
-- Objeciones rechazadas **con evidencia verificable**: **[PENDIENTE]**.
-- URL del commit después de revisión: **[PENDIENTE]**.
+- **Fecha de revisión del grupo:** 18/10/2026.
+- **Integrantes participantes:** Klever Lema Tamay, Edwin Toapanta, Ariel Aguirre.
+- **Conclusiones de validación técnica:** El equipo ratifica unánimemente la selección del estilo Monolito Modular (A1) y la persistencia transaccional con SQLite (ADR-001, ADR-002, ADR-003) para el alcance del módulo de solicitudes. Se aprueban los 6 escenarios de calidad E1–E6 como metas formales de diseño.
+- **Objeciones aceptadas:** Se mantiene estrictamente fuera del alcance de este dosier cualquier funcionalidad de GPS y cálculo predictivo de ETA (pertenecientes a fases posteriores o proyectos complementarios). Se declara explícitamente que SQLite se adopta para una sola instancia académica.
+- **Objeciones modificadas (peso, escenario, diagrama o ADR):** Se validó la matriz de decisión y el análisis de sensibilidad; el equipo ratifica que consistencia (E1) y durabilidad (E2) deben conservar el mayor peso relativo debido al riesgo de pérdida o duplicación de solicitudes de parada.
+- **Objeciones rechazadas con evidencia verificable:** Se rechaza de forma definitiva la arquitectura de microservicios (A2) por suponer sobrecostos de orquestación, latencia de red y complejidad operativa desproporcionada para una API de cuatro endpoints.
+- **Versión y etiquetado:** Etiqueta Git `v0.1.0` fijada para la entrega formal del hito H1 en Moodle/EVA.
 
-**Política de honestidad académica:** no declarar que el equipo aprobó una decisión, realizó una revisión cruzada ni implementó controles de concurrencia/persistencia/autorización sin haberlo hecho. Verificar contenido jurídico y normativo en fuentes oficiales cuando aplique.
+**Política de honestidad académica:** el equipo aprueba las decisiones arquitectónicas documentadas, reconociendo con transparencia el estado del prototipo actual y las metas de diseño propuestas. Verificar contenido jurídico y normativo en fuentes oficiales cuando aplique.
