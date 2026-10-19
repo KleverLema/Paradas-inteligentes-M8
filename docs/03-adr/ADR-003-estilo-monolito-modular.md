@@ -1,51 +1,32 @@
-# ADR-003 — Adoptar monolito modular para la API académica
+# ADR-003 — Estilo arquitectónico: monolito modular
 
-- **Estado:** Propuesto — pendiente de aprobación por equipo.
-- **Fecha:** 15/10/2026.
-- **Drivers:** D1–D5. **Escenarios:** E1–E6. **Restricciones:** R3–R6.
+**Fecha:** 18/10/2026  
+**Estado:** Seleccionada para la arquitectura objetivo; modularización no implementada en la API de referencia.  
+**Drivers:** D1–D5 · **Escenarios:** E1–E6 · **Restricciones:** R3, R5, R6.
 
 ## Contexto
 
-La API suministrada está contenida en `main.py`, sin separación física entre rutas, esquemas, reglas y almacenamiento. Su alcance actual es una sola entidad, cuatro operaciones REST principales, catálogo fijo y máquina de estados. La primera semana requiere documentar arquitectura; el docente no exige reprogramar la API para completar el dosier. Una eventual implementación debe priorizar fiabilidad (E1–E3), protección de datos (E4), rendimiento (E5) y facilidad de mantenimiento (E6).
+El alcance funcional comprende cuatro operaciones de negocio sobre solicitudes de parada. La API de referencia combina rutas, validaciones, reglas y almacenamiento dentro de `main.py`. La evolución propuesta incorpora una base de datos, garantías transaccionales y separación de responsabilidades, sin requerir aún operaciones independientes distribuidas.
 
-## Alternativas de estilo
+## Alternativas
 
-- **A1 — Monolito modular (preferida):** una aplicación FastAPI desplegable, con paquetes internos para API, dominio, casos de uso y repositorio de datos; una SQLite transaccional en etapa académica.
-- **A2 — Microservicios:** servicio de solicitudes, servicio de catálogo/identidad y almacenamiento/integración administrados de forma independiente, mayor complejidad de red y despliegue.
-- **Estado actual, no competidor como solución objetivo:** un solo `main.py` con `dict` (referencia de partida, no alcanza E1/E2/E4).
+**A1. Monolito modular:** un proceso FastAPI con módulos internos de rutas, dominio, servicios y acceso a datos, y un almacenamiento SQLite para una primera instancia.
 
-## Matriz de decisión
+**A2. Microservicios:** separar solicitudes y otros servicios de negocio en procesos independientes, con comunicación y operación distribuidas.
 
-La evaluación detallada y sus justificaciones están en [`matriz-decision.md`](matriz-decision.md). Con pesos ilustrativos **A1 = 4,25 / 5** y **A2 = 3,70 / 5**. Las calificaciones son razonadas, **no resultados de pruebas de rendimiento**.
+## Decisión
 
-## Decisión propuesta
+Seleccionar **A1, monolito modular**, por el menor costo de despliegue y la posibilidad de mantener las operaciones transaccionales dentro de una sola aplicación. Mantener fronteras internas claras entre reglas, rutas y persistencia.
 
-Seleccionar **A1, monolito modular**: conservar un proceso FastAPI, separar lógica de negocio y acceso a datos, incorporar SQLite (ADR-001) y unicidad transaccional (ADR-002). Evitar microservicios y broker hasta demostrar un requisito real que los justifique.
+## Evaluación
 
-## Alternativa descartada
+La [matriz ponderada](matriz-decision.md) compara ambas alternativas frente a seis criterios relacionados con escenarios de calidad. La puntuación de diseño resultante es **4,25/5 para A1** y **3,70/5 para A2**. Son valoraciones razonadas de arquitectura, no resultados de pruebas de desempeño.
 
-A2 microservicios: aportaría escalabilidad independiente para un futuro mayor, pero requiere varios despliegues, identidades entre servicios y manejo distribuido innecesarios para cuatro endpoints académicos y el equipo disponible.
+## Consecuencias y trade-offs
 
-## Consecuencias positivas
+- La estructura modular facilita cambios en persistencia y reglas sin incorporar múltiples despliegues.
+- Una sola aplicación simplifica seguimiento, pruebas de contrato y operación para el alcance actual.
+- No permite escalar cada módulo de manera independiente; un crecimiento hacia GPS, ETA o varias instancias requeriría reevaluar la solución.
+- La elección no implementa automáticamente autenticación, autorización ni índices; estas capacidades requieren trabajo técnico posterior.
 
-- Menos infraestructura que operar, menor carga de aprendizaje y despliegue más sencillo.
-- Mantiene el contrato HTTP existente y permite modularizar de manera incremental.
-- Las transacciones de solicitudes quedan dentro de un almacenamiento consistente.
-
-## Consecuencias negativas / trade-offs
-
-- No escala por componentes independientemente como microservicios.
-- Persistencia SQLite local no es adecuado asumirla para múltiples instancias distribuidas sin rediseño.
-- Modularizar exige pruebas de regresión y disciplina de límites entre paquetes.
-- E4 requerirá una solución de autenticación y autorización que **no existe** en el prototipo suministrado.
-
-## Sensibilidad y riesgos
-
-Si en otro alcance el sistema pasa a múltiples instancias, varias ciudades, concurrencia elevada o integración en tiempo real con GPS/ETA, deben cambiar los pesos de desempeño/operación y estudiar PostgreSQL, colas u otros estilos. No se asume que el piloto académico tenga hoy esas necesidades. El punto de sensibilidad es **una instancia + carga moderada**. Una prueba de carga y concurrencia podría invalidar la elección.
-
-## Evidencia y vínculos
-
-- [Evidencia técnica de `main.py`](../05-evidencia-tecnica.md): descripción del prototipo de referencia, no incluido como código en SEM01.
-- [`matriz-decision.md`](matriz-decision.md): peso y justificación de las notas.
-- [`c4-nivel2.md`](../02-vistas-c4/c4-nivel2.md): **vista objetivo**, todavía no implementada.
-- E1–E6: [`01-contexto-y-drivers.md`](../01-contexto-y-drivers.md).
+La vista de contenedores asociada está en [C4 nivel 2](../02-vistas-c4/c4-nivel2.md).

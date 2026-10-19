@@ -1,168 +1,136 @@
-# Práctica 01 — Contexto, stakeholders, restricciones, drivers y escenarios de calidad
+# Contexto y drivers arquitectónicos
 
-**Caso:** Paradas Inteligentes — módulo de gestión de solicitudes de parada.  
-**Fecha de preparación:** 15/10/2026.  
-**Estado:** propuesta académica para validación grupal.  
-**Base técnica analizada:** prototipo `main.py` de solicitudes de parada facilitado para este análisis. Los extractos de código y las limitaciones observadas están documentados en [evidencia técnica](05-evidencia-tecnica.md); **el código original no es un entregable de SEM01**. Se excluyen las funciones de ETA y GPS de otros documentos académicos.
+## 1. Problema y alcance
 
-## 1. Descripción y límites del sistema
+En una gestión de solicitudes de parada deben evitarse registros contradictorios, conservarse las solicitudes y ofrecerse respuestas consistentes a los consumidores HTTP. El sistema analizado es una API REST desarrollada en Python con FastAPI, cinco paradas de catálogo y cuatro operaciones funcionales:
 
-API REST que registra solicitudes de parada de un pasajero en una parada del catálogo, evita solicitudes activas duplicadas mediante comprobación previa, consulta solicitudes y controla sus cambios de estado. Permite validar que las solicitudes ocurran entre las 05:00 y las 22:00. La versión suministrada tiene **almacenamiento en memoria** y cinco paradas académicas fijas de Tulcán; la clase `SolicitudOut` conserva `id_solicitud`, `id_parada`, `id_pasajero`, `hora_solicitud`, `estado`.
-
-| Caso de uso de la API actual | Evidencia verificable |
-|---|---|
-| Consultar paradas habilitadas | `main.py`: `listar_paradas()` / `GET /paradas`. |
-| Crear solicitud | `main.py`: `crear_solicitud()` / `POST /solicitudes`. |
-| Consultar solicitud por ID | `main.py`: `obtener_solicitud()` / `GET /solicitudes/{id_solicitud}`. |
-| Cambiar estado | `main.py`: `cambiar_estado()` / `PATCH /solicitudes/{id_solicitud}/estado`. |
-
-**Fuera del alcance actual y del dosier semanal:** GPS, lectura de posición de buses, cálculo ETA, visualizadores de parada, aplicación móvil de pasajeros, SMS, pago, envío de datos a flota, alta dinámica de nuevas paradas. El SRS de otra asignatura imagina parte de estos elementos para un **proyecto más amplio**, pero no están implementados aquí.
-
-**Supuestos propuestos para los ADR (validar con el equipo):** despliegue académico de una instancia, equipo pequeño, presupuesto limitado, un almacenamiento relacional local inicialmente, API consumida por cliente HTTP o Swagger/Postman, sin prometer producción. No se presuponen datos de pasajeros reales.
-
-## 2. Stakeholders y concerns (intereses, no tecnologías)
-
-| ID | Stakeholder | Rol / relación | Concerns principales | Influencia propuesta |
-|---|---|---|---|---|
-| S1 | Pasajero solicitante | Beneficiario de solicitudes | Que no se pierda su petición, que no se duplique, que sea sencilla y privada | Alta |
-| S2 | Operador del sistema de transporte | Supervisa las solicitudes | Consultar estados correctos, no presentar información contradictoria | Alta |
-| S3 | Equipo de desarrollo y pruebas | Construye y mantiene la API | Cambios acotados, pruebas repetibles y despliegue sencillo | Alta |
-| S4 | Responsable de protección de datos | Evalúa tratamiento de identificadores | Restringir acceso a identificadores personales y dejar trazabilidad | Alta |
-| S5 | Integrador / consumidor REST | Integra un cliente con la API | Contrato estable, errores consistentes, respuestas oportunas | Media |
-| S6 | Administrador de infraestructura | Mantiene el entorno de ejecución | Poder reiniciar el servicio sin pérdida de solicitudes | Media |
-
-**Conflictos de concerns:** S1/S5 piden rapidez y facilidad, mientras S4 requiere controles de acceso; S3 prefiere pocas dependencias, mientras S6/S1 necesitan durabilidad. No se elige tecnología en esta sección.
-
-## 3. Restricciones y supuestos
-
-| ID | Tipo | Restricción / condición | Origen y evidencia | Negociable |
-|---|---|---|---|---|
-| R1 | Negocio (actual) | Una misma pareja (`id_pasajero`, `id_parada`) no mantiene dos solicitudes activas (`PENDIENTE`, `CONFIRMADA`) | `main.py`: función `crear_solicitud()` | No |
-| R2 | Negocio (actual) | Horario permitido 05:00–22:00 y transición válida de estados | `main.py`: `HORA_MINIMA`, `HORA_MAXIMA`, `TRANSICIONES_VALIDAS` | No |
-| R3 | Alcance académico (actual) | Catálogo de 5 paradas y cuatro operaciones REST de negocio | `main.py` y README original | Parcial (si evoluciona el MVP) |
-| R4 | Técnica (actual) | La versión entregada usa un `dict` sin persistencia; al reiniciarse se pierden solicitudes | `main.py`: `solicitudes = {}` | Sí; se busca cambiarlo |
-| R5 | Organizacional (confirmado) | Equipo académico de tres integrantes y plazo de entrega del módulo | Composición del equipo: Klever Lema Tamay, Edwin Toapanta y Ariel Aguirre; calendario EVA | No (para esta entrega) |
-| R6 | Económica (supuesto) | Evitar servicios de pago durante la demostración | Hipótesis académica; falta confirmación | Parcial |
-| R7 | Protección de datos (a verificar) | Limitar la exposición del identificador del pasajero en entornos reales | Riesgo detectado en la API; verificar obligaciones legales aplicables antes del despliegue | No respecto al cumplimiento legal |
-
-**Supuestos bajo validación:** una sola instancia del servidor, usuarios de prueba sintéticos, el sistema no requiere por ahora alta disponibilidad multisede y SQLite sería suficiente para un primer despliegue académico. **Hecho observado:** no hay autenticación implementada en el prototipo. Ninguno de estos supuestos equivale a un hecho probado.
-
-## 4. Drivers arquitectónicos priorizados
-
-| ID | Driver | Tipo / atributo principal | Origen | Importancia | Dificultad |
-|---|---|---|---|---|---|
-| D1 | Consistencia ante solicitudes duplicadas concurrentes | Fiabilidad | S1, S2, R1 | Alta | Alta |
-| D2 | Conservación de solicitudes después del reinicio | Fiabilidad | S1, S6, R4 | Alta | Media |
-| D3 | Acceso controlado a datos de solicitudes | Seguridad | S4, R7 | Alta | Media |
-| D4 | Respuesta ágil en consulta y registro | Eficiencia de desempeño | S1, S5 | Media | Media |
-| D5 | Cambios de almacenamiento y reglas sin reescribir toda la API | Mantenibilidad | S3, R5, R6 | Media | Media |
-
-**Driver principal:** D1, porque una doble solicitud activa compromete la confianza en la información del sistema. D2 también es prioritario: la API anterior borra su estado con cada reinicio.
-
-## 5. Escenarios de calidad — seis partes y medida
-
-> Las metas numéricas son **objetivos ilustrativos propuestos**, no mediciones realizadas ni garantías de la versión actual. Deben ser validadas y, cuando exista implementación, medidas con pruebas. Un escenario se vincula a un atributo principal para respetar la rúbrica.
-
-### E1 — Fiabilidad: evitar duplicaciones bajo concurrencia (D1)
-
-| Parte | Especificación |
-|---|---|
-| Fuente | Dos o más clientes HTTP que representan solicitudes del mismo pasajero y parada. |
-| Estímulo | Envían 100 solicitudes simultáneas con los mismos `id_pasajero`, `id_parada`, todas dentro de horario. |
-| Entorno | Apertura del servicio, ejecución concurrente de la API en una instancia. |
-| Artefacto | Servicio de solicitudes y almacenamiento transaccional propuesto. |
-| Respuesta | Acepta solo una solicitud activa y rechaza el resto con HTTP 409. |
-| Medida | **0 duplicados activos entre 100 solicitudes simultáneas**; 1 HTTP 201 y 99 HTTP 409, verificables en BD. |
-
-**Estado hoy:** comprobación con `any(...)` sobre `dict` sin garantía transaccional; **E1 no verificado bajo concurrencia**.
-
-### E2 — Fiabilidad: conservar las solicitudes (D2)
-
-| Parte | Especificación |
-|---|---|
-| Fuente | Administrador de infraestructura o reinicio automático. |
-| Estímulo | Se reinicia el proceso de la API tras registrar 100 solicitudes de prueba. |
-| Entorno | Operación normal en servidor académico de una instancia. |
-| Artefacto | Mecanismo de persistencia de solicitudes. |
-| Respuesta | El servidor recupera los mismos registros y estados al arrancar. |
-| Medida | **100 de 100 registros recuperados** con IDs y estados sin cambios tras el reinicio. |
-
-**Estado hoy:** el `dict` se vacía al reiniciar; **no cumple**.
-
-### E3 — Fiabilidad: transición de estados coherente (D1)
-
-| Parte | Especificación |
-|---|---|
-| Fuente | Cliente API de pruebas. |
-| Estímulo | Solicita transiciones inválidas como `ATENDIDA → PENDIENTE`. |
-| Entorno | Solicitudes registradas durante operación normal. |
-| Artefacto | API de actualización y máquina de estados. |
-| Respuesta | Rechaza la transición y conserva el estado anterior. |
-| Medida | **100 % de 20 transiciones inválidas rechazadas con HTTP 400**, sin alteraciones de estado. |
-
-**Estado hoy:** hay `TRANSICIONES_VALIDAS`; se requiere ejecutar una batería específica para comprobar exactamente esta meta.
-
-### E4 — Seguridad: acceso no autorizado (D3)
-
-| Parte | Especificación |
-|---|---|
-| Fuente | Consumidor no autorizado o sin sesión válida. |
-| Estímulo | Realiza 50 consultas a solicitudes ajenas. |
-| Entorno | Entorno de prueba con mecanismo de identidad/autorización incorporado. |
-| Artefacto | Capa de seguridad de API y registro de auditoría. |
-| Respuesta | Deniega el acceso y registra el intento sin exponer datos del pasajero. |
-| Medida | **50 de 50 accesos denegados y registrados** en una prueba controlada. |
-
-**Estado hoy:** no existe autenticación ni autorización. **Meta futura: no cumple en el prototipo aportado.**
-
-### E5 — Eficiencia de desempeño: consultar solicitudes (D4)
-
-| Parte | Especificación |
-|---|---|
-| Fuente | Cliente de carga sintética. |
-| Estímulo | Ejecuta 120 consultas por minuto al endpoint `GET /solicitudes/{id_solicitud}`. |
-| Entorno | Instancia de prueba con 1 000 solicitudes precargadas, ambiente controlado. |
-| Artefacto | API de consulta y mecanismo de almacenamiento. |
-| Respuesta | Responde HTTP 200 para IDs existentes manteniendo la latencia objetivo. |
-| Medida | **Al menos 95 % de respuestas inferiores a 2 s** durante 5 minutos de carga. |
-
-**Estado hoy:** no se realizó esta prueba en el presente dosier; los resultados de JMeter del trabajo anterior no pueden equipararse automáticamente a esta carga.
-
-### E6 — Mantenibilidad: sustituir almacenamiento (D5)
-
-| Parte | Especificación |
-|---|---|
-| Fuente | Equipo de desarrollo. |
-| Estímulo | Se solicita migrar de SQLite a otro almacenamiento SQL. |
-| Entorno | Versión modular con pruebas de contrato disponibles. |
-| Artefacto | Repositorio de solicitudes y capa de acceso a datos. |
-| Respuesta | Cambia la implementación del repositorio conservando contratos REST y reglas de negocio. |
-| Medida | **Sin cambios en rutas públicas**; modificación limitada al módulo de persistencia y configuración, estimada en **máximo 1 día-persona** (validar con prototipo). |
-
-**Estado hoy:** la lógica de negocio y el `dict` comparten `main.py`; la meta aún no puede comprobarse.
-
-## 6. Priorización, coherencia y trazabilidad
-
-| Prioridad | Escenario | Driver | Justificación |
-|---|---|---|---|
-| 1 | E1 | D1 | Invariante central de solicitud única y alto costo de corregir concurrencia. |
-| 2 | E2 | D2 | La pérdida por reinicio es una limitación demostrable del prototipo actual. |
-| 3 | E4 | D3 | Riesgo de exposición de `id_pasajero` si el servicio se publica a terceros. |
-| 4 | E3 | D1 | Asegura integridad del flujo de estados. |
-| 5 | E5 | D4 | Permite justificar rendimiento con una carga definida. |
-| 6 | E6 | D5 | Reduce costo de cambios posteriores. |
-
-| Decisión | Escenarios protegidos | Vistas relacionadas |
+| Caso de uso | Operación REST | Resultado |
 |---|---|---|
-| ADR-001 Persistencia local SQLite (propuesta) | E2, E5, E6 | C4 nivel 2 objetivo |
-| ADR-002 Unicidad activa con BD transaccional (propuesta) | E1, E3 | C4 nivel 2 objetivo |
-| ADR-003 Monolito modular FastAPI (propuesta) | E1–E6 | C4 niveles 1, 2 y matriz |
+| Consultar paradas | `GET /paradas` | Lista de paradas disponibles |
+| Registrar solicitud | `POST /solicitudes` | Nueva solicitud en estado `PENDIENTE` |
+| Consultar solicitud | `GET /solicitudes/{id_solicitud}` | Solicitud y estado vigente |
+| Cambiar estado | `PATCH /solicitudes/{id_solicitud}/estado` | Cambio validado por la máquina de estados |
 
-## 7. Contraste crítico y validaciones pendientes
+El dominio establece el horario de **05:00 a 22:00** inclusive. Los estados son `PENDIENTE`, `CONFIRMADA`, `ATENDIDA` y `CANCELADA`; los dos últimos son terminales. Se rechaza el registro de una segunda solicitud activa para la misma pareja (`id_pasajero`, `id_parada`). La implementación consultada usa un diccionario en memoria y no incorpora autenticación. Los elementos externos como GPS, ETA, aplicación móvil o mensajería no se incluyen en este módulo.
 
-- **Hallazgo sustentado en el código fuente revisado:** la validación de duplicados se realiza antes de insertar, sin transacción explícita, de modo que no hay evidencia para afirmar protección concurrente. Se propone E1 y ADR-002, **no se considera implementado**.
-- **Hallazgo sustentado en el código fuente revisado:** no hay base de datos ni mecanismo de autenticación. Las propuestas ADR-001 y E4 deberán implementarse y ensayarse en fases futuras.
-- **Dato por validar con el equipo:** escenarios y cifras de carga/persistencia, cantidad de integrantes y aceptación final del estilo. No se inventan pruebas.
-- **Revisión cruzada con otro equipo:** aún pendiente, ver `02-vistas-c4/revision-cruzada.md`.
+## 2. Stakeholders y concerns
 
-**Evidencia técnica publicada en el dosier:** [extractos y análisis del prototipo](05-evidencia-tecnica.md). Referencias metodológicas: guías de las tres sesiones del Módulo 8, Bass et al. (2021), ISO/IEC/IEEE 42010:2022 y [C4 Model](https://c4model.com/). Para formular obligaciones legales concretas se debe verificar la normativa aplicable en la fuente oficial.
+| ID | Interesado | Rol | Preocupaciones principales | Influencia |
+|---|---|---|---|---|
+| S1 | Pasajero | Solicita una parada | Registro único, continuidad de la solicitud y protección de su identificador | Alta |
+| S2 | Operador de transporte | Da seguimiento a solicitudes | Estados coherentes, información confiable y respuesta oportuna | Alta |
+| S3 | Equipo de desarrollo | Desarrolla y mantiene la API | Cambios localizados, pruebas repetibles y bajo esfuerzo de operación | Alta |
+| S4 | Responsable de protección de datos | Supervisa el acceso a identificadores | Control de accesos y uso apropiado de los datos | Alta |
+| S5 | Consumidor o integrador REST | Envía consultas y solicitudes HTTP | Contrato estable, errores comprensibles y latencia acotada | Media |
+| S6 | Administrador de infraestructura | Opera el servicio | Reinicios seguros y recuperación de información | Media |
+
+Existe una tensión entre velocidad de respuesta y controles de acceso, y otra entre simplicidad de despliegue y persistencia duradera. Estas preocupaciones condicionan los drivers sin imponer todavía una tecnología.
+
+## 3. Restricciones y supuestos de diseño
+
+| ID | Tipo | Condición | Origen | Negociabilidad |
+|---|---|---|---|---|
+| R1 | Negocio | No coexistirán dos solicitudes activas para el mismo pasajero y parada | Regla en `crear_solicitud()` | No |
+| R2 | Negocio | Horario de servicio 05:00–22:00 y transiciones permitidas entre estados | Validación y máquina de estados de la API | No en el alcance estudiado |
+| R3 | Funcional | Catálogo fijo de cinco paradas y cuatro operaciones REST | API FastAPI analizada | Parcial, por ampliación del sistema |
+| R4 | Técnica | La versión base mantiene solicitudes en memoria y carece de persistencia | `solicitudes = {}` en la API | Sí; motiva el ADR-001 |
+| R5 | Organizacional | Un equipo de tres integrantes desarrolla la propuesta | Organización del proyecto | No para esta fase |
+| R6 | Económica | Priorizar alternativas con baja complejidad y sin infraestructura adicional de pago | Criterio de diseño para el alcance reducido | Parcial |
+| R7 | Seguridad | No exponer datos de solicitudes a usuarios no autorizados en un servicio de producción | Concern de S4 y ausencia actual de autorización | No para el objetivo de protección |
+
+**Supuestos de dimensionamiento:** una instancia de API para el alcance inicial; tráfico moderado; datos sintéticos de prueba y sin necesidad actual de operación distribuida. Son hipótesis de diseño para comparar alternativas, no capacidades medidas.
+
+## 4. Drivers priorizados
+
+| ID | Driver | Atributo de calidad | Origen | Importancia | Dificultad |
+|---|---|---|---|---|---|
+| D1 | Evitar duplicados activos incluso con solicitudes concurrentes | Fiabilidad | S1, S2, R1 | Alta | Alta |
+| D2 | Recuperar solicitudes después de reiniciar el servicio | Fiabilidad | S1, S6, R4 | Alta | Media |
+| D3 | Restringir el acceso a información de solicitudes | Seguridad | S4, R7 | Alta | Media |
+| D4 | Mantener tiempos de consulta aceptables | Eficiencia de desempeño | S1, S5 | Media | Media |
+| D5 | Reducir el impacto de cambios en almacenamiento y lógica | Mantenibilidad | S3, R5, R6 | Media | Media |
+
+Se prioriza **D1** por el riesgo de inconsistencias de negocio y **D2** por la pérdida de estado al reiniciar. Los escenarios siguientes permiten convertir estas prioridades en medidas comprobables.
+
+## 5. Escenarios de calidad
+
+Cada escenario se formula mediante las seis partes: fuente, estímulo, entorno, artefacto, respuesta y medida. Las cifras son **criterios de aceptación definidos para la arquitectura objetivo**, no resultados de ensayos ya efectuados.
+
+### E1. Fiabilidad: solicitudes concurrentes — D1
+
+| Parte | Descripción |
+|---|---|
+| Fuente | Clientes HTTP simultáneos |
+| Estímulo | 100 peticiones `POST /solicitudes` con la misma pareja pasajero–parada |
+| Entorno | Instancia operativa, dentro del horario permitido |
+| Artefacto | Servicio de registro y repositorio persistente |
+| Respuesta | Registrar una sola solicitud activa y rechazar las restantes |
+| Medida | 1 respuesta HTTP 201, 99 respuestas HTTP 409 y **0 duplicados activos** en almacenamiento |
+
+### E2. Fiabilidad: recuperación tras reinicio — D2
+
+| Parte | Descripción |
+|---|---|
+| Fuente | Administrador del servidor |
+| Estímulo | Reiniciar la API después de registrar 100 solicitudes |
+| Entorno | Una instancia y una base de datos persistente |
+| Artefacto | Repositorio de solicitudes |
+| Respuesta | Recuperar los registros con sus estados originales |
+| Medida | **100 de 100 solicitudes recuperadas** con identificadores y estados intactos |
+
+### E3. Fiabilidad: transiciones válidas — D1
+
+| Parte | Descripción |
+|---|---|
+| Fuente | Consumidor HTTP |
+| Estímulo | Enviar 20 cambios de estado no permitidos, por ejemplo `ATENDIDA → PENDIENTE` |
+| Entorno | API operativa con solicitudes existentes |
+| Artefacto | Regla de transición de estados |
+| Respuesta | Rechazar cada solicitud sin alterar el estado almacenado |
+| Medida | **20 de 20 operaciones rechazadas con HTTP 400** y 0 alteraciones indebidas |
+
+### E4. Seguridad: acceso a solicitudes ajenas — D3
+
+| Parte | Descripción |
+|---|---|
+| Fuente | Cliente sin autorización |
+| Estímulo | Ejecutar 50 consultas a solicitudes de otro pasajero |
+| Entorno | Servicio objetivo con identidad y autorización incorporadas |
+| Artefacto | API y control de acceso |
+| Respuesta | Denegar la consulta y registrar el intento sin mostrar datos sensibles |
+| Medida | **50 de 50 accesos denegados y registrados** |
+
+### E5. Eficiencia de desempeño: consulta — D4
+
+| Parte | Descripción |
+|---|---|
+| Fuente | Cliente de carga |
+| Estímulo | Ejecutar 120 solicitudes por minuto a `GET /solicitudes/{id_solicitud}` |
+| Entorno | Una instancia de prueba con 1 000 registros durante 5 minutos |
+| Artefacto | API de consulta y almacenamiento |
+| Respuesta | Devolver las solicitudes existentes dentro del límite de latencia |
+| Medida | **Al menos 95 % de respuestas HTTP 200 en menos de 2 segundos** |
+
+### E6. Mantenibilidad: sustitución de base de datos — D5
+
+| Parte | Descripción |
+|---|---|
+| Fuente | Equipo de desarrollo |
+| Estímulo | Sustituir SQLite por otro motor relacional |
+| Entorno | Arquitectura modular con pruebas de contrato |
+| Artefacto | Módulo de repositorio de solicitudes |
+| Respuesta | Cambiar la persistencia sin modificar rutas ni reglas de negocio |
+| Medida | **0 cambios en contratos REST** y modificación limitada al adaptador y configuración, con estimación de **1 día-persona** |
+
+## 6. Trazabilidad y priorización de escenarios
+
+| Prioridad | Escenario | Driver | Decisión relacionada |
+|---|---|---|---|
+| 1 | E1: unicidad concurrente | D1 | ADR-002 |
+| 2 | E2: recuperación | D2 | ADR-001 |
+| 3 | E4: autorización | D3 | ADR-003 y evolución de seguridad |
+| 4 | E3: transiciones | D1 | ADR-002 y lógica de dominio |
+| 5 | E5: desempeño | D4 | ADR-001 / ADR-003 |
+| 6 | E6: facilidad de modificación | D5 | ADR-001 / ADR-003 |
+
+Los escenarios E1, E2 y E4 motivan las decisiones de mayor impacto. La evaluación de alternativas se desarrolla en [la matriz de decisión](03-adr/matriz-decision.md).

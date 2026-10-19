@@ -1,48 +1,39 @@
-# ADR-002 — Garantizar unicidad de solicitudes activas con restricción de base de datos
+# ADR-002 — Unicidad de solicitudes activas
 
-- **Estado:** Propuesto — pendiente de aceptación por el equipo.
-- **Fecha:** 15/10/2026.
-- **Drivers:** D1. **Escenarios:** E1, E3. **Restricciones:** R1, R2.
-- **Dependencia:** ADR-001 (almacenamiento relacional).
+**Fecha:** 18/10/2026  
+**Estado:** Seleccionada para la arquitectura objetivo; no implementada en la API de referencia.  
+**Drivers:** D1 · **Escenarios:** E1, E3 · **Restricción:** R1 · **Depende de:** ADR-001.
 
 ## Contexto
 
-En `main.py`, la ruta `POST /solicitudes` primero busca duplicados recorriendo `solicitudes.values()` con `any(...)` y después inserta en el diccionario. Ese esquema sirve para comprobaciones secuenciales, pero **no proporciona garantía transaccional de unicidad ante solicitudes concurrentes**. La meta E1 requiere una única solicitud activa por pareja pasajero-parada para 100 peticiones simultáneas.
+La ruta `POST /solicitudes` utiliza una búsqueda `any(...)` sobre el diccionario para detectar otra solicitud activa con el mismo `id_pasajero` y `id_parada`. Esa comprobación funciona para peticiones secuenciales, pero la lectura y posterior escritura no están protegidas por una transacción. Dos solicitudes concurrentes podrían observar la misma disponibilidad.
 
-## Decisión propuesta
+## Alternativas
 
-Tras implementar ADR-001, crear una **restricción de unicidad activa a nivel de base de datos** (SQLite: índice único parcial) para la pareja (`id_pasajero`, `id_parada`) cuando `estado` sea `PENDIENTE` o `CONFIRMADA`. Crear y actualizar solicitudes dentro de transacciones y traducir el conflicto de unicidad a HTTP 409 sin duplicar estados.
+| Alternativa | Ventaja | Limitación |
+|---|---|---|
+| Comprobación previa en Python | Simple, ya existe en la API | No ofrece garantía transaccional |
+| Bloqueo en memoria del proceso | Sin base de datos adicional | No garantiza unicidad entre múltiples procesos y no resuelve persistencia |
+| Restricción única parcial en SQLite | Invariante protegido por el motor de datos | Puede generar contención en escrituras concurrentes |
 
-**Ejemplo de diseño, no migración ejecutada:**
+## Decisión
+
+Utilizar una **restricción de unicidad a nivel de base de datos** sobre la pareja (`id_pasajero`, `id_parada`) solamente mientras la solicitud esté en estado `PENDIENTE` o `CONFIRMADA`. Ejecutar el registro dentro de una transacción y traducir la violación de unicidad a **HTTP 409**.
 
 ```sql
-CREATE UNIQUE INDEX uq_solicitud_activa
+CREATE UNIQUE INDEX ux_solicitud_activa
 ON solicitudes (id_pasajero, id_parada)
 WHERE estado IN ('PENDIENTE', 'CONFIRMADA');
 ```
 
-Al cancelar o atender una solicitud, dejará de estar comprendida en el índice, permitiendo una futura solicitud según las reglas del negocio. El diseño debe confirmar con el equipo si múltiples horarios o fechas son parte del identificador lógico de duplicado; **el código actual solo usa pasajero + parada**.
+El diseño de esquema deberá asegurar que los identificadores, los estados y las transacciones correspondan al contrato de la API.
 
-## Alternativas consideradas
+## Consecuencias y trade-offs
 
-1. Validación `any(...)` en `dict` como ahora: simple, sin protección transaccional de concurrencia.
-2. Candado (`Lock`) solo en memoria: serializa dentro de un proceso, pero no protege varias instancias ni la persistencia.
-3. Índice único parcial y transacciones en BD (preferida): el motor preserva el invariante incluso ante solicitudes simultáneas compatibles con la misma base.
+- Se protege la regla de negocio independientemente del orden de llegada de las peticiones.
+- Se admite una nueva solicitud una vez finalizada o cancelada la anterior, según las reglas vigentes.
+- La escritura concurrente puede experimentar bloqueos o reintentos, cuyo impacto se evaluará en E1 y E5.
 
-## Consecuencias positivas
+## Comprobación
 
-- La regla crítica R1 se verifica en el nivel donde se confirman los datos.
-- La API puede devolver HTTP 409 de forma consistente.
-- Apoya E1 sin depender solo de comprobaciones previas.
-
-## Consecuencias negativas / trade-offs
-
-- Requiere adaptar la lógica de guardado y tratar errores de integridad.
-- Introduce bloqueo/contención durante escritura; rendimiento debe evaluarse con E5.
-- Cambiar posteriormente la definición del duplicado (p. ej. agregar fecha, ruta o franja) implica migraciones.
-
-## Evidencia y verificación
-
-- Evidencia actual: [extracto de `crear_solicitud()` y estados](../05-evidencia-tecnica.md).
-- Prueba pendiente: 100 peticiones simultáneas, esperar 1 creación y 99 rechazos; verificar cero activos duplicados en BD.
-- **Vínculo:** [`c4-nivel2.md`](../02-vistas-c4/c4-nivel2.md), E1, ADR-001.
+La prueba E1 establece 100 solicitudes concurrentes equivalentes: una aceptada, 99 rechazadas y cero registros activos duplicados. La base transaccional se representa en [C4 nivel 2](../02-vistas-c4/c4-nivel2.md).

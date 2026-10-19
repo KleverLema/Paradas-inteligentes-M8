@@ -1,36 +1,43 @@
-# Paradas Inteligentes — SEM01: dosier de arquitectura (Módulo 8)
+# Paradas Inteligentes
 
-**Equipo:** Klever Lema Tamay · Edwin Toapanta · Ariel Aguirre.  
-**Repositorio:** https://github.com/KleverLema/Paradas-inteligentes-M8  
-**Estado:** documentación académica de arquitectura, con decisiones propuestas; la implementación futura no se declara terminada.
+## Dosier de arquitectura de software
 
-## Alcance del proyecto
+**Maestría en Ingeniería de Software — UPEC · Módulo 8: Automatización de procesos de software**  
+**Integrantes:** Klever Lema Tamay, Edwin Toapanta y Ariel Aguirre  
+**Fecha:** 18 de octubre de 2026
 
-Se documenta **únicamente** el módulo de solicitudes de parada de una API REST FastAPI. El prototipo de referencia permite consultar paradas, crear solicitudes, consultar una solicitud y cambiar estados. No implementa ETA, GPS, aplicación móvil, notificaciones ni base de datos persistente. La separación modular, la persistencia SQLite y la garantía transaccional se evalúan como **decisiones de diseño**, no como trabajo programado esta semana.
+### Descripción del sistema
 
-## Índice del dosier
+Se analiza una API REST para gestionar solicitudes de parada en el transporte público. El alcance funcional comprende la consulta de un catálogo fijo de paradas, el registro y la consulta de solicitudes, y la actualización de su estado. La referencia técnica es una aplicación Python/FastAPI cuyo almacenamiento reside en memoria. El dosier define una arquitectura objetivo con persistencia, integridad transaccional y separación modular.
 
-| Práctica | Archivo | Contenido |
+El estudio delimita las responsabilidades del sistema, los atributos de calidad y las decisiones que más condicionan su evolución. El cálculo de tiempo estimado de llegada (ETA), el seguimiento GPS, la mensajería y las aplicaciones de usuario no forman parte de esta API.
+
+### Estructura del dosier
+
+| Área | Documento | Contenido |
 |---|---|---|
-| 01 | [01-contexto-y-drivers.md](docs/01-contexto-y-drivers.md) | Problema, stakeholders, concerns, restricciones, 5 drivers y 6 escenarios con seis partes y medidas |
-| 02 | [c4-nivel1.md](docs/02-vistas-c4/c4-nivel1.md) | C4 contexto como código Mermaid |
-| 02 | [c4-nivel2.md](docs/02-vistas-c4/c4-nivel2.md) | C4 contenedores de la arquitectura objetivo; enlazado a ADR |
-| Complementaria | [c4-nivel2-actual.md](docs/02-vistas-c4/c4-nivel2-actual.md) | Vista del prototipo en memoria; evita confundir realidad y propuesta |
-| 03 | [ADR-001](docs/03-adr/ADR-001-persistencia-solicitudes.md), [ADR-002](docs/03-adr/ADR-002-unicidad-concurrencia.md) y [ADR-003](docs/03-adr/ADR-003-estilo-monolito-modular.md) | Contexto, alternativas, decisión, consecuencias y trade-offs |
-| 03 | [matriz-decision.md](docs/03-adr/matriz-decision.md) | Comparación de alternativas, pesos 100 %, valoración y sensibilidad |
-| Verificación | [04-registro-ia.md](docs/04-registro-ia.md) | Consulta y contraste crítico con IA |
-| Evidencia | [05-evidencia-tecnica.md](docs/05-evidencia-tecnica.md) | Extractos y observaciones del prototipo de referencia; no incorpora código ajeno |
-| Colaboración | [revision-cruzada.md](docs/02-vistas-c4/revision-cruzada.md) | Ficha para la revisión **real** con otro equipo: pendiente hasta efectuarla |
+| Contexto y drivers | [01-contexto-y-drivers.md](docs/01-contexto-y-drivers.md) | Interesados, preocupaciones, restricciones, cinco drivers y seis escenarios medibles |
+| C4 nivel 1 | [c4-nivel1.md](docs/02-vistas-c4/c4-nivel1.md) | Contexto, límite del sistema y relaciones externas |
+| C4 nivel 2 | [c4-nivel2.md](docs/02-vistas-c4/c4-nivel2.md) | Contenedores de la arquitectura objetivo y tecnologías propuestas |
+| Coherencia | [coherencia-de-vistas.md](docs/02-vistas-c4/coherencia-de-vistas.md) | Correspondencia entre actores, contenedores, drivers y decisiones |
+| ADR-001 | [Persistencia de solicitudes](docs/03-adr/ADR-001-persistencia-solicitudes.md) | Selección de almacenamiento SQLite |
+| ADR-002 | [Unicidad transaccional](docs/03-adr/ADR-002-unicidad-concurrencia.md) | Protección frente a registros activos duplicados |
+| ADR-003 | [Estilo arquitectónico](docs/03-adr/ADR-003-estilo-monolito-modular.md) | Selección de monolito modular |
+| Selección de estilo | [matriz-decision.md](docs/03-adr/matriz-decision.md) | Comparación ponderada, sensibilidad y trade-offs |
+| Análisis crítico de IA | [04-registro-ia.md](docs/04-registro-ia.md) | Uso, verificación y tratamiento de propuestas de IA |
+| Base técnica | [05-evidencia-tecnica.md](docs/05-evidencia-tecnica.md) | Evidencias del comportamiento de la API analizada |
 
-## Qué se ha verificado y qué falta
+### Decisiones arquitectónicas
 
-- Los diagramas se escribieron en Mermaid y deben comprobarse en la pestaña **Preview** de GitHub tras cada cambio.
-- La matriz contiene puntajes **hipotéticos**, no mediciones de desempeño. La segunda distribución de pesos contrasta la sensibilidad de la elección.
-- Los escenarios E1–E6 son metas para una eventual implementación, no pruebas superadas.
-- **Aprobación de decisiones ratificada:** las decisiones y ADRs han sido revisados y ratificados por el equipo (Edwin Toapanta, Ariel Aguirre y Klever Lema) en `docs/04-registro-ia.md`. La revisión cruzada con otro equipo se formalizará en la dinámica inter-equipos programada.
-- Repositorio privado: el docente debe ser invitado como colaborador y aceptar el acceso.
-- Antes de enviar EVA, crear la etiqueta `v0.1.0` para el commit final que el grupo apruebe.
+1. **Persistencia:** SQLite con una capa de acceso a datos separada de los endpoints, adecuado para una primera instancia de despliegue.
+2. **Consistencia:** transacciones y un índice único parcial para evitar más de una solicitud activa por pareja pasajero–parada.
+3. **Organización:** monolito modular FastAPI frente a microservicios, seleccionado mediante criterios de fiabilidad, seguridad, rendimiento, mantenibilidad y operación.
 
-## Entrega SEM01 en EVA
+Estas decisiones describen la **arquitectura objetivo**. La API de referencia conserva actualmente las solicitudes en memoria; no se atribuyen al prototipo capacidades de persistencia, autorización o consistencia transaccional que no implementa.
 
-Enviar **únicamente la URL de un commit específico**, que fijará la versión evaluada; no adjuntar ZIP ni elaborar otro Word obligatorio. Si después del commit original se realizan correcciones, se debe compartir el **nuevo commit final**. Esta versión de documentación no publica material de compañeros de otro grupo ni su código fuente.
+### Referencias de arquitectura
+
+- Bass, L., Clements, P., & Kazman, R. (2021). *Software architecture in practice* (4.ª ed.). Addison-Wesley.
+- Brown, S. (s. f.). *The C4 model for visualising software architecture*. https://c4model.com/
+- ISO/IEC/IEEE. (2022). *ISO/IEC/IEEE 42010:2022: Software, systems and enterprise — Architecture description*.
+- Nygard, M. (2011). *Documenting architecture decisions*. https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions

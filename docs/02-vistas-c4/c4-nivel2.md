@@ -1,36 +1,38 @@
-# Práctica 02 — Vista C4 nivel 2: contenedores (arquitectura objetivo)
+# C4 — Nivel 2: contenedores de la arquitectura seleccionada
 
-**Sistema:** Gestión de solicitudes de parada.  
-**Estado de la vista:** **objetivo propuesto**, coherente con ADR-001, ADR-002 y ADR-003. Los controles de SQLite, unicidad transaccional y autorización **no están implementados** en el prototipo original.
-
-## Contenedores del sistema y responsabilidades
-
-| Elemento | Tipo | Responsabilidad | Estado |
-|---|---|---|---|
-| API REST de solicitudes | Contenedor: aplicación Python / FastAPI | Exponer las cuatro operaciones, aplicar validaciones, orquestar solicitudes | FastAPI existe; modularización y control de acceso pendientes |
-| Base de datos de solicitudes | Contenedor: almacén relacional SQLite | Persistir solicitudes y estados y preservar unicidad activa mediante transacciones | **Propuesta, sin implementación** |
-| Cliente HTTP de pruebas o integración | Sistema externo, fuera del límite | Usar los endpoints; **no es** un contenedor dentro del sistema | Posibilidad de consumo probada con herramientas HTTP |
-| Equipo técnico y de pruebas | Persona externa, fuera del límite | Revisar respuestas y ejecutar pruebas de calidad | Actividad académica |
-
-## Diagrama de contenedores como código (Mermaid)
+La vista representa la **arquitectura objetivo** del módulo de solicitudes: una API FastAPI modular y un repositorio SQLite. La implementación analizada dispone actualmente de una aplicación FastAPI única con datos en memoria; la persistencia y la modularización son decisiones de diseño documentadas en los ADR.
 
 ```mermaid
 flowchart TB
-    cliente["Cliente HTTP de pruebas o integración<br/>[Sistema externo]"]
-    equipo["Equipo técnico y de pruebas<br/>[Persona]"]
+  cliente["Cliente HTTP / sistema integrador<br/>[Sistema externo]"]
+  desarrollador["Equipo técnico<br/>[Persona]"]
 
-    subgraph sistema["Gestión de solicitudes de parada · estado objetivo"]
-        api["API REST de solicitudes<br/>[Contenedor: Python / FastAPI modular]"]
-        bd[("Base de datos de solicitudes<br/>[Contenedor: SQLite · propuesta]")]
-        api -->|"Lee y escribe solicitudes y estados; SQL con transacciones"| bd
-    end
+  subgraph sistema["Gestión de solicitudes de parada"]
+    api["API REST de solicitudes<br/>[Contenedor: Python / FastAPI modular]"]
+    datos[("Base de datos de solicitudes<br/>[Contenedor: SQLite]")]
+    api -->|"Lee y escribe solicitudes y estados; SQL/transacciones"| datos
+  end
 
-    cliente -->|"GET, POST y PATCH; HTTP / JSON"| api
-    equipo -->|"Pruebas y consultas de contrato; HTTP / JSON"| api
+  cliente -->|"GET / POST / PATCH; HTTP/JSON"| api
+  desarrollador -->|"Consulta y prueba API; HTTP/JSON"| api
 ```
 
-**Correspondencia entre niveles:** el sistema central del nivel 1 se descompone aquí en **dos contenedores internos**. Ni el usuario ni el cliente externo se convierten en contenedores desplegables de nuestro sistema. La API actual consta de un solo `main.py`; la base de datos es una **decisión futura**, no una BD ya existente.
+## Catálogo de contenedores
 
-**Vínculos a decisiones:** [ADR-001 persistencia](../03-adr/ADR-001-persistencia-solicitudes.md), [ADR-002 unicidad](../03-adr/ADR-002-unicidad-concurrencia.md), [ADR-003 estilo](../03-adr/ADR-003-estilo-monolito-modular.md), [matriz ponderada](../03-adr/matriz-decision.md).
+| Contenedor | Tecnología | Responsabilidad | Decisión |
+|---|---|---|---|
+| API REST | Python / FastAPI | Operaciones REST, validación de horario y estados; separar rutas, reglas y repositorio de datos | ADR-003 |
+| Base de datos de solicitudes | SQLite | Persistencia de solicitudes, transacciones y unicidad de solicitudes activas | ADR-001 y ADR-002 |
 
-**Verificación y trade-offs:** E1 comprueba unicidad bajo concurrencia; E2, recuperación tras reinicio; E4, futura autorización. El despliegue único simplifica operación, pero no escala cada módulo por separado. El índice de unicidad protege integridad, pero requiere tratar errores de bloqueo y concurrencia. Para contrastar el **prototipo real**, consultar [C4 nivel 2 actual](c4-nivel2-actual.md).
+El consumidor HTTP y el equipo técnico aparecen fuera del límite del sistema. **SQLite corresponde al diseño seleccionado y no a una función ya implementada**. La separación del contenedor FastAPI respecto de SQLite hace visible el compromiso entre operación simple y capacidad de escalar a múltiples instancias.
+
+## Correspondencia con los escenarios
+
+- **E1:** la unicidad se garantiza mediante reglas de base de datos, no solo con una búsqueda previa en memoria.
+- **E2:** la persistencia permite recuperar registros tras reiniciar la API.
+- **E3:** la validación de estados permanece en la lógica de dominio.
+- **E4:** el control de acceso se incorporaría en la API; no forma parte del prototipo analizado.
+- **E5:** consultas SQL e índices requieren pruebas bajo la carga definida.
+- **E6:** una interfaz de repositorio separa la persistencia de los contratos HTTP.
+
+Consultar [ADR-001](../03-adr/ADR-001-persistencia-solicitudes.md), [ADR-002](../03-adr/ADR-002-unicidad-concurrencia.md), [ADR-003](../03-adr/ADR-003-estilo-monolito-modular.md) y [matriz ponderada](../03-adr/matriz-decision.md).
