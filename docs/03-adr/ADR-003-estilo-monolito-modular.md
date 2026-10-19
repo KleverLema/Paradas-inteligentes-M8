@@ -45,7 +45,7 @@ Si en otro alcance el sistema pasa a múltiples instancias, varias ciudades, con
 
 ## Evidencia y vínculos
 
-- `main.py` y `README_API_ORIGINAL.md`: versión actual.
+- [Evidencia técnica de `main.py`](../05-evidencia-tecnica.md): descripción del prototipo de referencia, no incluido como código en SEM01.
 - [`matriz-decision.md`](matriz-decision.md): peso y justificación de las notas.
 - [`c4-nivel2.md`](../02-vistas-c4/c4-nivel2.md): **vista objetivo**, todavía no implementada.
 - E1–E6: [`01-contexto-y-drivers.md`](../01-contexto-y-drivers.md).

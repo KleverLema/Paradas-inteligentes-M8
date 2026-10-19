@@ -43,6 +43,6 @@ Al cancelar o atender una solicitud, dejará de estar comprendida en el índice,
 
 ## Evidencia y verificación
 
-- Evidencia actual: `main.py`, función `crear_solicitud()` y enumeración de estados.
+- Evidencia actual: [extracto de `crear_solicitud()` y estados](../05-evidencia-tecnica.md).
 - Prueba pendiente: 100 peticiones simultáneas, esperar 1 creación y 99 rechazos; verificar cero activos duplicados en BD.
 - **Vínculo:** [`c4-nivel2.md`](../02-vistas-c4/c4-nivel2.md), E1, ADR-001.

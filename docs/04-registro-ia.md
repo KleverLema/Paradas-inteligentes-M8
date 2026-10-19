@@ -19,6 +19,18 @@
 | La API actual puede exponer identificadores a consumidores externos | E4 | Confundir pruebas locales con servicio seguro | Pruebas 50 intentos sin rol y auditoría | Declarar brecha y no usar datos reales |
 | Las funciones ETA/GPS y la API de solicitudes podrían mezclarse | Alcance | Dar por hecho que un prototipo implementa todo el SRS | Confirmación del alcance por el equipo y revisión de la documentación | Mantener alcance reducido y documentar exclusiones |
 
+## Contraste técnico del borrador de dosier
+
+| Propuesta asistida | Comprobación en material de referencia | Resultado documental (NO aprobación del equipo) |
+|---|---|---|
+| «SQLite ya funciona en el prototipo» | `main.py` mantiene `solicitudes = {}` y no configura motor SQL. | **Rechazada**: SQLite solo aparece como propuesta ADR-001. |
+| «Basta con buscar duplicados antes de insertar» | `crear_solicitud()` usa `any(...)` antes de insertar, sin una transacción que abarque ambos pasos. | **Modificada**: ADR-002 requiere índice único parcial y manejo de conflictos concurrentes. |
+| «El sistema de paradas ya calcula ETA» | Los cuatro endpoints del prototipo gestionan exclusivamente catálogo y solicitudes. | **Rechazada**: ETA/GPS quedan fuera del alcance de este dosier. |
+| «El diseño debe ser microservicios por modernidad» | Caso con cuatro endpoints, tres integrantes y alcance académico. | **Rechazada**: comparar estilos por escenarios y costo, no por tendencia. |
+| «La arquitectura modular podría ser adecuada» | Matriz con criterios y escenarios E1–E6 (valoración hipotética). | **Aceptada para análisis**, su adopción final sigue pendiente de aprobación del equipo. |
+
+Las comprobaciones de estructura de documentos y enlaces **no equivalen a pruebas de software**. Registro preparado para revisión y ratificación del equipo.
+
 ## Control humano por completar antes de la entrega
 
 - Fecha de revisión del grupo: **[PENDIENTE]**.

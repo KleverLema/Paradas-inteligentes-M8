@@ -3,7 +3,7 @@
 **Caso:** Paradas Inteligentes — módulo de gestión de solicitudes de parada.  
 **Fecha de preparación:** 15/10/2026.  
 **Estado:** propuesta académica para validación grupal.  
-**Fuentes del caso:** `main.py`, `README_API_ORIGINAL.md`, tests Pytest; `Proyecto final(2).zip` se usa solamente como referencia general del dominio, **no como evidencia de funcionalidades incorporadas a esta API**.
+**Base técnica analizada:** prototipo `main.py` de solicitudes de parada facilitado para este análisis. Los extractos de código y las limitaciones observadas están documentados en [evidencia técnica](05-evidencia-tecnica.md); **el código original no es un entregable de SEM01**. Se excluyen las funciones de ETA y GPS de otros documentos académicos.
 
 ## 1. Descripción y límites del sistema
 
@@ -41,11 +41,11 @@ API REST que registra solicitudes de parada de un pasajero en una parada del cat
 | R2 | Negocio (actual) | Horario permitido 05:00–22:00 y transición válida de estados | `main.py`: `HORA_MINIMA`, `HORA_MAXIMA`, `TRANSICIONES_VALIDAS` | No |
 | R3 | Alcance académico (actual) | Catálogo de 5 paradas y cuatro operaciones REST de negocio | `main.py` y README original | Parcial (si evoluciona el MVP) |
 | R4 | Técnica (actual) | La versión entregada usa un `dict` sin persistencia; al reiniciarse se pierden solicitudes | `main.py`: `solicitudes = {}` | Sí; se busca cambiarlo |
-| R5 | Organizacional (supuesto) | Equipo pequeño y plazo académico corto | Hipótesis para este trabajo; confirmar con el grupo | Parcial |
+| R5 | Organizacional (confirmado) | Equipo académico de tres integrantes y plazo de entrega del módulo | Composición del equipo: Klever Lema Tamay, Edwin Toapanta y Ariel Aguirre; calendario EVA | No (para esta entrega) |
 | R6 | Económica (supuesto) | Evitar servicios de pago durante la demostración | Hipótesis académica; falta confirmación | Parcial |
 | R7 | Protección de datos (a verificar) | Limitar la exposición del identificador del pasajero en entornos reales | Riesgo detectado en la API; verificar obligaciones legales aplicables antes del despliegue | No respecto al cumplimiento legal |
 
-**Supuestos bajo validación:** una sola instancia del servidor, usuarios de prueba sintéticos, no hay autenticación en el prototipo, el sistema no requiere por ahora alta disponibilidad multisede, persistencia SQLite sería suficiente para el primer despliegue académico. Ninguno de estos supuestos equivale a un hecho probado.
+**Supuestos bajo validación:** una sola instancia del servidor, usuarios de prueba sintéticos, el sistema no requiere por ahora alta disponibilidad multisede y SQLite sería suficiente para un primer despliegue académico. **Hecho observado:** no hay autenticación implementada en el prototipo. Ninguno de estos supuestos equivale a un hecho probado.
 
 ## 4. Drivers arquitectónicos priorizados
 
@@ -160,9 +160,9 @@ API REST que registra solicitudes de parada de un pasajero en una parada del cat
 
 ## 7. Contraste crítico y validaciones pendientes
 
-- **Hallazgo verificado en código:** la validación de duplicados se realiza antes de insertar, sin transacción explícita, de modo que no hay evidencia para afirmar protección concurrente. Se propone E1 y ADR-002, **no se considera implementado**.
-- **Hallazgo verificado en código:** no hay base de datos ni mecanismo de autenticación. Las propuestas ADR-001 y E4 deberán implementarse y ensayarse en fases futuras.
+- **Hallazgo sustentado en el código fuente revisado:** la validación de duplicados se realiza antes de insertar, sin transacción explícita, de modo que no hay evidencia para afirmar protección concurrente. Se propone E1 y ADR-002, **no se considera implementado**.
+- **Hallazgo sustentado en el código fuente revisado:** no hay base de datos ni mecanismo de autenticación. Las propuestas ADR-001 y E4 deberán implementarse y ensayarse en fases futuras.
 - **Dato por validar con el equipo:** escenarios y cifras de carga/persistencia, cantidad de integrantes y aceptación final del estilo. No se inventan pruebas.
 - **Revisión cruzada con otro equipo:** aún pendiente, ver `02-vistas-c4/revision-cruzada.md`.
 
-**Referencias técnicas del análisis:** `main.py`, `README_API_ORIGINAL.md`, pruebas `pytest`, y guías de las sesiones 1–3 del Módulo 8. Para atribuciones normativas se necesita verificar el texto oficial antes de formular obligaciones específicas.
+**Evidencia técnica publicada en el dosier:** [extractos y análisis del prototipo](05-evidencia-tecnica.md). Referencias metodológicas: guías de las tres sesiones del Módulo 8, Bass et al. (2021), ISO/IEC/IEEE 42010:2022 y [C4 Model](https://c4model.com/). Para formular obligaciones legales concretas se debe verificar la normativa aplicable en la fuente oficial.

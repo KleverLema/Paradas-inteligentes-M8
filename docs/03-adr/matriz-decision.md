@@ -55,7 +55,26 @@ Una calificación de 1 a 5 evalúa **cuánto favorece la alternativa el criterio
 
 **Sensibilidad:** si el supuesto de una instancia cambia o el servicio se amplía a la solución ETA del SRS (con GPS/GSM y pantallas), la evaluación debe repetirse. La decisión **no es universal** ni incorpora los componentes ETA que no existen en la API actual.
 
-## 6. Decisión y contraste con IA
+## 6. Comprobación de sensibilidad (segundo escenario de pesos)
+
+Para comprobar que la conclusión no depende exclusivamente de una distribución de pesos, se ajusta **moderadamente** la importancia relativa: se disminuye consistencia de 30 % a 20 %, se aumenta durabilidad a 25 % y facilidad de cambio a 15 %; se mantienen los restantes pesos. **Son hipótesis de diseño y no ensayos medidos.**
+
+| Criterio | Peso base | Peso de contraste | Nota A1 | Nota A2 |
+|---|---:|---:|---:|---:|
+| C1 Consistencia | 30 % | 20 % | 5 | 3 |
+| C2 Durabilidad | 20 % | 25 % | 4 | 5 |
+| C3 Protección | 15 % | 15 % | 3 | 4 |
+| C4 Desempeño | 15 % | 15 % | 4 | 4 |
+| C5 Cambio | 10 % | 15 % | 4 | 5 |
+| C6 Costo | 10 % | 10 % | 5 | 1 |
+| **Suma** | **100 %** | **100 %** | | |
+
+- **A1:** (20×5 + 25×4 + 15×3 + 15×4 + 15×4 + 10×5) / 100 = **4,15**.
+- **A2:** (20×3 + 25×5 + 15×4 + 15×4 + 15×5 + 10×1) / 100 = **3,90**.
+
+**Resultado del contraste:** A1 también ocupa el primer lugar con estos pesos, aunque su margen disminuye de **0,55** a **0,25** puntos. La elección es **sensible al peso del costo operativo y a los supuestos de una sola instancia**; si cambian las restricciones, deberá repetirse la evaluación. Las puntuaciones mismas requieren validación del grupo y no prueban que una arquitectura ya cumpla E1–E6. La nota 5 otorgada a A2 en durabilidad supone que habría un subsistema persistente con operación y recuperación independientes, **no deriva automáticamente del estilo microservicios**.
+
+## 7. Decisión y contraste con IA
 
 **Ganador propuesto:** A1 (4,25 sobre 5). Documentado en [`ADR-003`](ADR-003-estilo-monolito-modular.md).  
 **Objeción crítica:** la meta E1 aún no se ha probado concurrentemente y E4 no está implementada; sin resultados reales, las notas son hipótesis justificadas, no certificaciones.  

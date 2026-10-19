@@ -32,7 +32,7 @@ Adoptar **SQLite** como repositorio persistente para la primera etapa, introduci
 
 ## Evidencia y verificación
 
-- Evidencia actual: `main.py`, bloque «Base de datos en memoria» y `README_API_ORIGINAL.md`.
+- Evidencia actual: [extracto del prototipo `main.py`](../05-evidencia-tecnica.md), «Base de datos en memoria».
 - Prueba futura E2: registrar 100 solicitudes, reiniciar proceso y comprobar recuperación exacta.
 - Condición de reconsideración: se requieren múltiples réplicas, acceso remoto intensivo o requisitos de operación mayores.
 - **Vínculo:** [`c4-nivel2.md`](../02-vistas-c4/c4-nivel2.md), matriz ponderada, E2.
