@@ -1,0 +1,256 @@
+openapi: 3.0.3
+info:
+  title: API de Gestión de Solicitudes de Paradas Inteligentes
+  version: 0.2.0
+  description: >
+    API REST para el módulo de registro, consulta y ciclo de vida de solicitudes de parada
+    en el sistema de transporte urbano de Tulcán. Diseñado bajo el enfoque API-First y
+    validado con reglas Spectral OAS3.
+  contact:
+    name: Equipo de Arquitectura y Automatización - Módulo 8
+    email: edwin.toapanta@upec.edu.ec
+servers:
+  - url: http://localhost:8000
+    description: Servidor de desarrollo local
+
+tags:
+  - name: Paradas
+    description: Catálogo y consulta de paradas habilitadas
+  - name: Solicitudes
+    description: Ciclo de vida y gestión transaccional de solicitudes de parada
+
+paths:
+  /paradas:
+    get:
+      tags:
+        - Paradas
+      summary: Consultar catálogo de paradas habilitadas
+      description: Devuelve la lista de paradas autorizadas en la red urbana con sus identificadores y coordenadas.
+      operationId: listarParadas
+      responses:
+        '200':
+          description: Lista de paradas habilitadas recuperada exitosamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Parada'
+
+  /solicitudes:
+    post:
+      tags:
+        - Solicitudes
+      summary: Registrar una nueva solicitud de parada
+      description: >
+        Crea una solicitud de recogida para un pasajero en una parada autorizada.
+        Aplica validación de horario comercial (05:00 a 22:00) y restricción de unicidad activa (E1, ADR-002).
+      operationId: crearSolicitud
+      requestBody:
+        required: true
+        description: Datos requeridos para registrar la solicitud
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SolicitudCreate'
+      responses:
+        '201':
+          description: Solicitud registrada exitosamente en estado PENDIENTE
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolicitudResponse'
+        '400':
+          description: Solicitud fuera de horario operativo (05:00 - 22:00) o datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: La parada especificada no existe en el catálogo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflicto. Ya existe una solicitud activa (PENDIENTE o CONFIRMADA) para el mismo pasajero y parada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /solicitudes/{id_solicitud}:
+    get:
+      tags:
+        - Solicitudes
+      summary: Consultar solicitud de parada por ID
+      description: Recupera el estado y los atributos de una solicitud registrada previamente.
+      operationId: obtenerSolicitudPorId
+      parameters:
+        - name: id_solicitud
+          in: path
+          required: true
+          description: Identificador numérico único de la solicitud
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Solicitud localizada y devuelta exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolicitudResponse'
+        '404':
+          description: La solicitud con el ID indicado no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /solicitudes/{id_solicitud}/estado:
+    patch:
+      tags:
+        - Solicitudes
+      summary: Actualizar estado de una solicitud de parada
+      description: >
+        Avanza el ciclo de vida de la solicitud según la máquina de estados autorizada:
+        PENDIENTE -> CONFIRMADA o CANCELADA; CONFIRMADA -> ATENDIDA o CANCELADA.
+      operationId: actualizarEstadoSolicitud
+      parameters:
+        - name: id_solicitud
+          in: path
+          required: true
+          description: Identificador numérico único de la solicitud a modificar
+          schema:
+            type: integer
+            minimum: 1
+      requestBody:
+        required: true
+        description: Nuevo estado que se desea aplicar
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstadoUpdate'
+      responses:
+        '200':
+          description: Estado actualizado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolicitudResponse'
+        '400':
+          description: Transición de estado inválida para el flujo actual
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Solicitud no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    Parada:
+      type: object
+      required:
+        - id_parada
+        - nombre
+        - latitud
+        - longitud
+      properties:
+        id_parada:
+          type: integer
+          example: 1
+          description: Identificador numérico de la parada
+        nombre:
+          type: string
+          example: "Parada Parque Central Tulcán"
+          description: Nombre descriptivo del punto de embarque
+        latitud:
+          type: number
+          format: float
+          example: 0.8116
+          description: Coordenada de latitud en grados decimales
+        longitud:
+          type: number
+          format: float
+          example: -77.7173
+          description: Coordenada de longitud en grados decimales
+
+    SolicitudCreate:
+      type: object
+      required:
+        - id_parada
+        - id_pasajero
+      properties:
+        id_parada:
+          type: integer
+          example: 1
+          description: Identificador de la parada donde se solicita el abordaje
+        id_pasajero:
+          type: string
+          minLength: 3
+          maxLength: 50
+          example: "pasajero-101"
+          description: Identificador anónimo del pasajero solicitante
+
+    SolicitudResponse:
+      type: object
+      required:
+        - id_solicitud
+        - id_parada
+        - id_pasajero
+        - hora_solicitud
+        - estado
+      properties:
+        id_solicitud:
+          type: integer
+          example: 1
+          description: Identificador único autoincremental de la solicitud
+        id_parada:
+          type: integer
+          example: 1
+          description: Identificador de la parada asignada
+        id_pasajero:
+          type: string
+          example: "pasajero-101"
+          description: Identificador del pasajero solicitante
+        hora_solicitud:
+          type: string
+          format: date-time
+          example: "2026-10-24T14:30:00Z"
+          description: Marca temporal UTC de registro de la solicitud
+        estado:
+          $ref: '#/components/schemas/EstadoSolicitud'
+
+    EstadoUpdate:
+      type: object
+      required:
+        - nuevo_estado
+      properties:
+        nuevo_estado:
+          $ref: '#/components/schemas/EstadoSolicitud'
+
+    EstadoSolicitud:
+      type: string
+      enum:
+        - PENDIENTE
+        - CONFIRMADA
+        - ATENDIDA
+        - CANCELADA
+      example: "PENDIENTE"
+      description: Estados permitidos en la máquina de estados de una solicitud
+
+    ErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          example: "Horario fuera de servicio. La atención es de 05:00 a 22:00."
+          description: Mensaje descriptivo con el motivo del error
