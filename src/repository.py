@@ -138,6 +138,16 @@ class ParadasRepository:
                 status_code=404
             )
 
+        if isinstance(nuevo_estado, str):
+            try:
+                nuevo_estado = EstadoSolicitud(nuevo_estado)
+            except ValueError:
+                conn.close()
+                raise RepositoryError(
+                    f"Estado '{nuevo_estado}' no reconocido. Estados válidos: {[e.value for e in EstadoSolicitud]}.",
+                    status_code=400
+                )
+
         estado_actual = EstadoSolicitud(row["estado"])
 
         # Verificar si la transición está permitida
