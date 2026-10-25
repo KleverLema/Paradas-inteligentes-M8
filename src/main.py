@@ -1,17 +1,17 @@
 """Punto de entrada de la aplicación FastAPI para Paradas Inteligentes."""
 
 from contextlib import asynccontextmanager
-from typing import List
-from fastapi import FastAPI, HTTPException, status
+
+from fastapi import FastAPI, status
 from fastapi.responses import JSONResponse
 
 from src.database import init_database
 from src.models import (
+    ErrorResponse,
     EstadoUpdate,
     Parada,
     SolicitudCreate,
     SolicitudResponse,
-    ErrorResponse
 )
 from src.repository import ParadasRepository, RepositoryError
 
@@ -49,7 +49,7 @@ async def repository_error_handler(request, exc: RepositoryError):
 
 @app.get(
     "/paradas",
-    response_model=List[Parada],
+    response_model=list[Parada],
     tags=["Paradas"],
     summary="Consultar catálogo de paradas habilitadas",
     description="Devuelve la lista completa de paradas autorizadas en la red urbana de Tulcán."

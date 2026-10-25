@@ -1,8 +1,7 @@
 """Modelos de datos Pydantic para la API de Paradas Inteligentes."""
 
-from datetime import datetime
 from enum import Enum
-from typing import Optional
+
 from pydantic import BaseModel, Field
 
 

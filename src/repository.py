@@ -1,8 +1,8 @@
 """Repositorio desacoplado para operaciones de acceso a datos y reglas de negocio."""
 
 import sqlite3
-from datetime import datetime, time, timezone
-from typing import List, Optional
+from datetime import UTC, datetime, time
+
 from src.database import get_db_connection
 from src.models import EstadoSolicitud, Parada, SolicitudResponse
 
@@ -27,10 +27,10 @@ class RepositoryError(Exception):
 
 
 class ParadasRepository:
-    def __init__(self, db_path: Optional[str] = None):
+    def __init__(self, db_path: str | None = None):
         self.db_path = db_path
 
-    def listar_paradas(self) -> List[Parada]:
+    def listar_paradas(self) -> list[Parada]:
         """Recupera la lista de paradas habilitadas en el sistema."""
         conn = get_db_connection(self.db_path)
         cursor = conn.cursor()
@@ -48,10 +48,10 @@ class ParadasRepository:
         conn.close()
         return exists
 
-    def crear_solicitud(self, id_parada: int, id_pasajero: str, override_time: Optional[datetime] = None) -> SolicitudResponse:
+    def crear_solicitud(self, id_parada: int, id_pasajero: str, override_time: datetime | None = None) -> SolicitudResponse:
         """Registra una solicitud aplicando validación horaria y de unicidad activa (E1, ADR-002)."""
         # Validación de horario comercial (R2)
-        ahora = override_time or datetime.now(timezone.utc)
+        ahora = override_time or datetime.now(UTC)
         hora_local = ahora.time()
 
         if not (HORA_MINIMA <= hora_local <= HORA_MAXIMA):
@@ -137,16 +137,6 @@ class ParadasRepository:
                 f"Solicitud con id {id_solicitud} no encontrada.",
                 status_code=404
             )
-
-        if isinstance(nuevo_estado, str):
-            try:
-                nuevo_estado = EstadoSolicitud(nuevo_estado)
-            except ValueError:
-                conn.close()
-                raise RepositoryError(
-                    f"Estado '{nuevo_estado}' no reconocido. Estados válidos: {[e.value for e in EstadoSolicitud]}.",
-                    status_code=400
-                )
 
         estado_actual = EstadoSolicitud(row["estado"])
 

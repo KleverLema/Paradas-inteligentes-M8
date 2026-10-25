@@ -1,13 +1,12 @@
 """Módulo de conexión y gestión de persistencia en SQLite (ADR-001, ADR-002)."""
 
-import sqlite3
 import os
-from typing import Optional
+import sqlite3
 
 DB_PATH_DEFAULT = os.path.join(os.path.dirname(os.path.dirname(__file__)), "paradas.db")
 
 
-def get_db_connection(db_path: Optional[str] = None) -> sqlite3.Connection:
+def get_db_connection(db_path: str | None = None) -> sqlite3.Connection:
     """Retorna una conexión a SQLite configurada con tipos de fila de diccionario."""
     target_path = db_path or DB_PATH_DEFAULT
     conn = sqlite3.connect(target_path, check_same_thread=False)
@@ -16,7 +15,7 @@ def get_db_connection(db_path: Optional[str] = None) -> sqlite3.Connection:
     return conn
 
 
-def init_database(db_path: Optional[str] = None) -> None:
+def init_database(db_path: str | None = None) -> None:
     """Inicializa las tablas y el catálogo semilla en la base de datos."""
     conn = get_db_connection(db_path)
     cursor = conn.cursor()
