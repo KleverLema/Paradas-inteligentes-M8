@@ -2,12 +2,14 @@
 
 import os
 import tempfile
+from datetime import UTC, datetime
+
 import pytest
-from datetime import datetime, timezone
 from fastapi.testclient import TestClient
 
 from src.database import init_database
 from src.main import app
+from src.models import EstadoSolicitud
 from src.repository import ParadasRepository
 
 
@@ -59,7 +61,7 @@ def test_hu02_crear_solicitud_exitosa(client_and_repo):
     """CA02.1: Creación exitosa en franja horaria permitida."""
     client, repo = client_and_repo
     # Forzar hora válida (10:30 AM UTC)
-    hora_valida = datetime(2026, 10, 24, 10, 30, tzinfo=timezone.utc)
+    hora_valida = datetime(2026, 10, 24, 10, 30, tzinfo=UTC)
     
     solicitud = repo.crear_solicitud(id_parada=1, id_pasajero="pasajero-test-1", override_time=hora_valida)
     assert solicitud.id_solicitud > 0
@@ -71,7 +73,7 @@ def test_hu02_crear_solicitud_exitosa(client_and_repo):
 def test_hu02_rechazo_horario_nocturno(client_and_repo):
     """CA02.2: Rechazo de solicitud fuera de franja 05:00 a 22:00."""
     _, repo = client_and_repo
-    hora_nocturna = datetime(2026, 10, 24, 23, 30, tzinfo=timezone.utc)
+    hora_nocturna = datetime(2026, 10, 24, 23, 30, tzinfo=UTC)
 
     with pytest.raises(Exception) as exc_info:
         repo.crear_solicitud(id_parada=1, id_pasajero="pasajero-test-2", override_time=hora_nocturna)
@@ -83,7 +85,7 @@ def test_hu02_rechazo_horario_nocturno(client_and_repo):
 def test_hu02_rechazo_duplicado_activo(client_and_repo):
     """CA02.3: Invariante de unicidad activa (E1, ADR-002) -> HTTP 409."""
     _, repo = client_and_repo
-    hora_valida = datetime(2026, 10, 24, 12, 0, tzinfo=timezone.utc)
+    hora_valida = datetime(2026, 10, 24, 12, 0, tzinfo=UTC)
 
     # Primera solicitud: Debe ser exitosa
     solicitud_1 = repo.crear_solicitud(id_parada=2, id_pasajero="pasajero-duplicado", override_time=hora_valida)
@@ -100,7 +102,7 @@ def test_hu02_rechazo_duplicado_activo(client_and_repo):
 def test_hu02_rechazo_parada_inexistente(client_and_repo):
     """CA02.4: Rechazo si el identificador de parada no está en catálogo -> 404."""
     _, repo = client_and_repo
-    hora_valida = datetime(2026, 10, 24, 14, 0, tzinfo=timezone.utc)
+    hora_valida = datetime(2026, 10, 24, 14, 0, tzinfo=UTC)
 
     with pytest.raises(Exception) as exc_info:
         repo.crear_solicitud(id_parada=9999, id_pasajero="pasajero-x", override_time=hora_valida)
@@ -111,7 +113,7 @@ def test_hu02_rechazo_parada_inexistente(client_and_repo):
 def test_hu03_obtener_solicitud_existente(client_and_repo):
     """CA03.1: Consulta exitosa de solicitud por ID."""
     client, repo = client_and_repo
-    hora_valida = datetime(2026, 10, 24, 9, 15, tzinfo=timezone.utc)
+    hora_valida = datetime(2026, 10, 24, 9, 15, tzinfo=UTC)
     creada = repo.crear_solicitud(id_parada=3, id_pasajero="pasajero-consulta", override_time=hora_valida)
 
     response = client.get(f"/solicitudes/{creada.id_solicitud}")
@@ -134,7 +136,7 @@ def test_hu03_obtener_solicitud_inexistente(client_and_repo):
 def test_hu04_transicion_estado_valida(client_and_repo):
     """CA04.1 y CA04.2: Transiciones autorizadas (PENDIENTE -> CONFIRMADA -> ATENDIDA)."""
     client, repo = client_and_repo
-    hora_valida = datetime(2026, 10, 24, 15, 0, tzinfo=timezone.utc)
+    hora_valida = datetime(2026, 10, 24, 15, 0, tzinfo=UTC)
     creada = repo.crear_solicitud(id_parada=4, id_pasajero="pasajero-flujo", override_time=hora_valida)
 
     # 1. PENDIENTE -> CONFIRMADA
@@ -151,12 +153,14 @@ def test_hu04_transicion_estado_valida(client_and_repo):
 def test_hu04_rechazo_transicion_invalida(client_and_repo):
     """CA04.3: Rechazo de transición prohibida (ATENDIDA -> PENDIENTE) -> HTTP 400 (E3)."""
     client, repo = client_and_repo
-    hora_valida = datetime(2026, 10, 24, 16, 0, tzinfo=timezone.utc)
+    hora_valida = datetime(2026, 10, 24, 16, 0, tzinfo=UTC)
     creada = repo.crear_solicitud(id_parada=5, id_pasajero="pasajero-invalido", override_time=hora_valida)
 
     # Pasar a ATENDIDA
-    repo.actualizar_estado(creada.id_solicitud, "CONFIRMADA")
-    repo.actualizar_estado(creada.id_solicitud, "ATENDIDA")
+    #repo.actualizar_estado(creada.id_solicitud, "CONFIRMADA")
+    #repo.actualizar_estado(creada.id_solicitud, "ATENDIDA")
+    repo.actualizar_estado(creada.id_solicitud, EstadoSolicitud.CONFIRMADA)
+    repo.actualizar_estado(creada.id_solicitud, EstadoSolicitud.ATENDIDA)
 
     # Intentar volver a PENDIENTE
     resp_invalida = client.patch(f"/solicitudes/{creada.id_solicitud}/estado", json={"nuevo_estado": "PENDIENTE"})
