@@ -41,7 +41,7 @@ Los estados permitidos son `PENDIENTE`, `CONFIRMADA`, `ATENDIDA` y `CANCELADA`. 
 
 ## Ejecución local en Windows
 
-Requiere Python 3.10 o superior. Desde la carpeta principal del repositorio, abrir PowerShell o la terminal de Visual Studio Code y ejecutar:
+Requiere Python 3.11 o superior, porque el código usa `datetime.UTC`. Desde la carpeta principal del repositorio, abrir PowerShell o la terminal de Visual Studio Code y ejecutar:
 
 ```powershell
 py -m venv .venv
