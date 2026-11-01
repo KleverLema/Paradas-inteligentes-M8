@@ -63,3 +63,19 @@ Cada artefacto generado en la Semana 2 fue sometido a validación práctica:
 - **Participantes:** Klever Lema Tamay, Edwin Toapanta, Ariel Aguirre.
 - **Decisión final:** Se aprueba formalmente la cadena CASE compuesta por Spectral, Antigravity AI y Pytest, consolidando los artefactos `docs/06-mapa-toolchain.md`, `docs/07-historias-y-criterios.md`, `docs/08-matriz-evaluacion-case.md`, `api/openapi.yaml`, `src/` y `tests/`.
 - **Etiquetado:** Versión fijada con la etiqueta Git **`v0.2.0`** para la entrega del Hito H2.
+
+---
+
+# Registro de uso y verificación crítica de IA — Semana 3: Repositorio gobernado (Hito H3)
+
+**Fecha:** 01/11/2026  
+**Integrante:** Ariel Aguirre  
+**Objetivo:** Documentar la asistencia de IA en la guía de contribución y en la matriz comparativa Git vs SVN.
+
+| Actividad | Herramienta y versión | Solicitud resumida | Aporte generado | Verificación / tratamiento |
+|---|---|---|---|---|
+| Guía de contribución (`CONTRIBUTING.md`) | Claude Opus 5.5 (Anthropic), mediante Claude Code | Redactar el flujo de ramas, commits y PR a partir de la rúbrica de la Semana 3 | Flujo GitHub Flow, convención de nombres de rama, tipos de Conventional Commits y reglas de revisión | **Modificado:** se ajustaron los tipos de commit y los comandos a los usados en el proyecto (`pytest`, `ruff`, Spectral). Se eligió *merge commit* en lugar de *squash* para conservar los commits atómicos. |
+| Matriz Git vs SVN (`docs/08-matriz-git-vs-svn.md`) | Claude Opus 5.5 (Anthropic), mediante Claude Code | Comparar Git y SVN en siete dimensiones con referencias en APA | Matriz con implicaciones para el proyecto y síntesis de criterios | **Modificado:** cada afirmación se contrastó con los capítulos 1 y 2 del SVN Book y los capítulos 1 y 3 de Pro Git. Se agregó la referencia del retiro del soporte Subversion en GitHub. |
+| Evidencia del historial | Claude Opus 5.5 (Anthropic), mediante Claude Code | Identificar commits que no siguen Conventional Commits | Lista de commits directos a `main` | **Verificado con `git log`:** se rechazó citar `df0dd8b` porque no contiene cambios. |
+
+No se ingresaron datos personales ni credenciales en la herramienta.
