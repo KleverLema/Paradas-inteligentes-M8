@@ -63,3 +63,23 @@ Cada artefacto generado en la Semana 2 fue sometido a validación práctica:
 - **Participantes:** Klever Lema Tamay, Edwin Toapanta, Ariel Aguirre.
 - **Decisión final:** Se aprueba formalmente la cadena CASE compuesta por Spectral, Antigravity AI y Pytest, consolidando los artefactos `docs/06-mapa-toolchain.md`, `docs/07-historias-y-criterios.md`, `docs/08-matriz-evaluacion-case.md`, `api/openapi.yaml`, `src/` y `tests/`.
 - **Etiquetado:** Versión fijada con la etiqueta Git **`v0.2.0`** para la entrega del Hito H2.
+
+---
+
+# Registro de uso y verificación crítica de IA — Semana 3: Repositorio gobernado (Hito H3)
+
+**Fecha:** 01/11/2026  
+**Integrante:** Ariel Aguirre  
+**Objetivo:** Documentar la asistencia de IA en los artefactos del repositorio gobernado: guía de contribución, plantillas, matriz Git vs SVN, ADR-004, revisión de seguridad y conflicto deliberado.
+
+| Actividad | Herramienta y versión | Solicitud resumida | Aporte generado | Verificación / tratamiento |
+|---|---|---|---|---|
+| Guía de contribución (`CONTRIBUTING.md`) | Claude Opus 5.5 (Anthropic), mediante Claude Code | Redactar el flujo de ramas, commits y PR a partir de la rúbrica de la Semana 3 | Flujo GitHub Flow, convención de nombres de rama, tipos de Conventional Commits y reglas de revisión | **Modificado:** se ajustaron los tipos de commit y los comandos a los usados en el proyecto (`pytest`, `ruff`, Spectral). Se eligió *merge commit* en lugar de *squash* para conservar los commits atómicos. |
+| Matriz Git vs SVN (`docs/08-matriz-git-vs-svn.md`) | Claude Opus 5.5 (Anthropic), mediante Claude Code | Comparar Git y SVN en siete dimensiones con referencias en APA | Matriz con implicaciones para el proyecto y síntesis de criterios | **Modificado:** cada afirmación se contrastó con los capítulos 1 y 2 del SVN Book y los capítulos 1 y 3 de Pro Git. Se agregó la referencia del retiro del soporte Subversion en GitHub. |
+| Plantillas y `.gitignore` (`.github/`, `.gitignore`) | Claude Opus 5.5 (Anthropic), mediante Claude Code | Proponer plantillas de issue y PR y un `.gitignore` para Python, FastAPI y SQLite | Dos plantillas de issue, plantilla de PR con lista de control y `.gitignore` ampliado | **Verificado:** tras ejecutar `pytest`, `paradas.db` y `__pycache__/` dejaron de aparecer en `git status`. **Modificado:** la lista de control del PR usa los comandos del proyecto. |
+| ADR-004 (`docs/03-adr/ADR-004-seleccion-git.md`) | Claude Opus 5.5 (Anthropic), mediante Claude Code | Redactar el ADR de selección de Git con el formato de ADR-001 a ADR-003 | Contexto, alternativas, decisión, consecuencias y casos en que aplicaría SVN | **Modificado:** los casos de SVN se limitaron a los que respalda la matriz; se declararon como consecuencia negativa la curva de aprendizaje y la dependencia de la disciplina del equipo. |
+| Revisión de seguridad (`docs/10-revision-seguridad-dependencias.md`) | Claude Opus 5.5 (Anthropic), mediante Claude Code | Buscar secretos en el historial y auditar dependencias | Comandos `git log -p --all` y `pip-audit`, y tabla de resultados | **Verificado con ejecución real:** `pip-audit` 2.10.1 sin vulnerabilidades; 9 pruebas aprobadas. **Aceptado como hallazgo:** Ruff reporta `RUF059` por versión no fijada; no se corrigió en el mismo PR. |
+| Conflicto deliberado (issues #8 y #9) | Claude Opus 5.5 (Anthropic), mediante Claude Code | Diseñar un conflicto realista sobre la misma línea del README | Dos ramas que modifican el requisito de versión de Python | **Verificado:** `src/repository.py` importa `datetime.UTC`, disponible desde Python 3.11, por lo que el requisito de 3.10 era un error real. |
+| Evidencia del historial | Claude Opus 5.5 (Anthropic), mediante Claude Code | Identificar commits que no siguen Conventional Commits | Lista de commits directos a `main` | **Verificado con `git log`:** se rechazó citar `df0dd8b` porque no contiene cambios. |
+
+No se ingresaron datos personales ni credenciales en la herramienta.
