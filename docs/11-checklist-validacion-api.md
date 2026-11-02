@@ -73,6 +73,7 @@ Consultar la documentación interactiva en:
 
 `http://127.0.0.1:8000/docs`
 
+**Observación sobre Ruff:** En la revisión de seguridad y dependencias del 01/11/2026 se identificó un error conocido `RUF059` en `tests/test_api.py:62`, correspondiente a una variable `client` no utilizada. El hallazgo apareció al ejecutar Ruff 0.17.3, dado que `requirements.txt` no fija una versión específica de Ruff. Este resultado está documentado en `docs/10-revision-seguridad-dependencias.md` y su corrección continúa pendiente. No debe considerarse aprobada la verificación de Ruff hasta resolver el hallazgo y ejecutar nuevamente el análisis.
 ## 6. Registro de resultados
 
 Para cada comprobación ejecutada, registrar:
@@ -107,3 +108,5 @@ El checklist se considera completo como documento cuando:
 ## 9. Declaración de uso de IA
 
 Se utilizó ChatGPT (OpenAI, GPT-6) como apoyo para estructurar la documentación y contrastar los casos propuestos con el código fuente publicado en el repositorio. El contenido debe ser revisado por el autor y validado por otro integrante mediante Pull Request antes de su incorporación a la rama principal.
+
+
