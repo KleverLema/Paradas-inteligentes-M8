@@ -1,0 +1,29 @@
+{
+  "name": "paradas-inteligentes-m8-trabajo",
+  "version": "1.0.0",
+  "description": "**Maestría en Ingeniería de Software — UPEC | Módulo 8**  \r **Integrantes:** Klever Lema Tamay, Edwin Toapanta y Ariel Aguirre",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KleverLema/Paradas-inteligentes-M8.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/KleverLema/Paradas-inteligentes-M8/issues"
+  },
+  "homepage": "https://github.com/KleverLema/Paradas-inteligentes-M8#readme",
+  "devDependencies": {
+    "@redocly/cli": "2.75.0",
+    "@stoplight/spectral-cli": "6.17.0"
+  }
+}
