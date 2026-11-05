@@ -59,7 +59,7 @@ def test_hu01_listar_paradas(client_and_repo):
 
 def test_hu02_crear_solicitud_exitosa(client_and_repo):
     """CA02.1: Creación exitosa en franja horaria permitida."""
-    client, repo = client_and_repo
+    _, repo = client_and_repo
     # Forzar hora válida (10:30 AM UTC)
     hora_valida = datetime(2026, 10, 24, 10, 30, tzinfo=UTC)
     
