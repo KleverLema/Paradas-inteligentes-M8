@@ -36,3 +36,26 @@ jobs:
 
       - name: Ejecutar pruebas con pytest
         run: python -m pytest tests/ -v
+
+  contrato:
+    name: Contrato OpenAPI y documentacion
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v7
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Instalar herramientas
+        run: npm ci
+
+      - name: Validar OpenAPI con Spectral
+        run: npx --no-install spectral lint api/openapi.yaml --ruleset .spectral.yaml --fail-severity=warn
+
+      - name: Generar documentacion con Redocly
+        run: npx --no-install redocly build-docs api/openapi.yaml --output docs-generada/index.html --inlineBundle

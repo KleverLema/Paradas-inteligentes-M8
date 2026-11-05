@@ -36,3 +36,5 @@ htmlcov/
 Thumbs.db
 Desktop.ini
 .DS_Store
+docs-generada/
+node_modules/
