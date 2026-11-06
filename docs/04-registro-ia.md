@@ -83,3 +83,15 @@ Cada artefacto generado en la Semana 2 fue sometido a validación práctica:
 | Evidencia del historial | Claude Opus 5.5 (Anthropic), mediante Claude Code | Identificar commits que no siguen Conventional Commits | Lista de commits directos a `main` | **Verificado con `git log`:** se rechazó citar `df0dd8b` porque no contiene cambios. |
 
 No se ingresaron datos personales ni credenciales en la herramienta.
+
+
+## Ampliacion de IA - Semana 4: CI y cierre H4
+
+- **Herramienta y version:** ChatGPT, modelo GPT-6 (OpenAI), durante la preparacion de la Semana 4.
+- **Solicitudes:** Explicar la rubrica; proponer flujo Git y PowerShell; configurar CI con Ruff, pytest, Spectral y Redocly; redactar borradores de trazabilidad e informe; proponer controles Bandit, pip-audit, auditoria npm y cobertura.
+- **Aceptado tras verificacion humana:** CI de Ruff y pytest aprobado en PR #19; Spectral y Redocly aprobados en el PR #20, segun capturas del repositorio. La integracion en main debe confirmarse consultando el historial.
+- **Modificado:** Se sustituyeron comandos o pasos cuando produjeron errores reales (por ejemplo, entorno virtual ausente y variable no usada RUF059); los borradores se ajustaron a las rutas efectivas de la API y las nueve pruebas existentes.
+- **Pendiente de aceptar:** los nuevos controles de seguridad, cobertura y reglas obligatorias, solo tras ver ejecuciones reales en verde y evidencia de un fallo controlado.
+- **Rechazado como afirmacion no demostrada:** que nueve pruebas prueban todas las condiciones no funcionales; que un PR fusionado equivale a despliegue de produccion; que el sistema cumple concurrencia real o autenticacion sin mediciones.
+- **Lista de verificacion de CI:** permisos minimos (`contents: read`); acciones con version fijada (`@v7`, `@v4`); no se incluyen secretos; ejecutar en PR; exigir checks en main cuando se comprueben los nombres; conservar capturas/logs de fallo y correccion.
+- **Privacidad:** No se compartieron contrasenas ni tokens de acceso en los archivos generados por este cierre.

@@ -1,3 +1,5 @@
+[![CI - Paradas Inteligentes](https://github.com/KleverLema/Paradas-inteligentes-M8/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/KleverLema/Paradas-inteligentes-M8/actions/workflows/ci.yml)
+
 # Paradas Inteligentes
 
 **Maestría en Ingeniería de Software — UPEC | Módulo 8**  
