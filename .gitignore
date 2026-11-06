@@ -38,3 +38,4 @@ Desktop.ini
 .DS_Store
 docs-generada/
 node_modules/
+coverage.xml

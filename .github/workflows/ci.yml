@@ -30,12 +30,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
+          python -m pip install pytest-cov
 
       - name: Verificar codigo con Ruff
         run: python -m ruff check src tests
 
       - name: Ejecutar pruebas con pytest
-        run: python -m pytest tests/ -v
+        run: python -m pytest tests/ -v --cov=src --cov-report=term-missing --cov-report=xml:coverage.xml --cov-fail-under=80
 
   contrato:
     name: Contrato OpenAPI y documentacion
@@ -54,8 +55,40 @@ jobs:
       - name: Instalar herramientas
         run: npm ci
 
+      - name: Revisar dependencias npm
+        run: npm audit --audit-level=high
+
       - name: Validar OpenAPI con Spectral
         run: npx --no-install spectral lint api/openapi.yaml --ruleset .spectral.yaml --fail-severity=warn
 
       - name: Generar documentacion con Redocly
         run: npx --no-install redocly build-docs api/openapi.yaml --output docs-generada/index.html --inlineBundle
+
+  seguridad:
+    name: Seguridad y dependencias
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v7
+
+      - name: Configurar Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+          cache: pip
+
+      - name: Instalar herramientas y proyecto
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip install bandit pip-audit
+
+      - name: Analisis estatico de seguridad con Bandit
+        # B104: host 0.0.0.0 solo en el arranque de desarrollo local de src/main.py
+        run: python -m bandit -r src -q -s B104
+
+      - name: Revisar vulnerabilidades Python
+        run: python -m pip_audit
+
+      - name: Buscar patrones evidentes de secretos
+        run: python tools/check_secrets.py
